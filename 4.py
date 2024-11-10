@@ -1,5 +1,3 @@
-##### siv0017
-
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -17,10 +15,20 @@ distance_matrix = np.array([
     [2412, 1929, 2012, 1839, 1734, 0]    # Ankara
 ])
 
+# Fixní souřadnice měst pro graf
+city_positions = {
+    "Praha": (0, 0),
+    "Bratislava": (1, 1),
+    "Berlín": (2, 0),
+    "Budapešť": (1.5, 1.5),
+    "Moskva": (4, 4),
+    "Ankara": (3, 3)
+}
+
 # Parametry genetického algoritmu
-population_size = 100   # Velikost populace
-generations = 100       # Počet generací
-mutation_rate = 200    # Pravděpodobnost mutace
+population_size = 50
+generations = 100
+mutation_rate = 0.9
 
 # Funkce pro výpočet celkové vzdálenosti cesty
 def path_distance(path):
@@ -39,12 +47,8 @@ def select_parents(population):
 def crossover(parent_a, parent_b):
     size = len(parent_a)
     child = [-1] * size
-    
-    # Vezmeme úsek z rodiče A
     start, end = sorted(random.sample(range(size), 2))
     child[start:end] = parent_a[start:end]
-    
-    # Doplníme zbývající část z rodiče B
     pos = end
     for city in parent_b:
         if city not in child:
@@ -52,7 +56,6 @@ def crossover(parent_a, parent_b):
                 pos = 0
             child[pos] = city
             pos += 1
-            
     return child
 
 # Mutace (náhodně prohodí dvě města)
@@ -76,21 +79,21 @@ for generation in range(generations):
     best_distance = path_distance(best_path)
     print(f"Generace {generation + 1}, Nejlepší vzdálenost: {best_distance:.2f} km")
 
-    # Vizualizace nejlepší cesty
+    # Vizualizace nejlepší cesty s fixními pozicemi měst
     plt.clf()
-    x = np.arange(len(cities))  # Osa X pro města
-    y = best_path  # Osa Y pro pořadí měst podle nejlepší nalezené cesty
-
+    x = [city_positions[cities[city]][0] for city in best_path]
+    y = [city_positions[cities[city]][1] for city in best_path]
+    
     # Nakreslíme čáry pro každý úsek cesty
     for i in range(len(best_path) - 1):
         plt.plot([x[i], x[i + 1]], [y[i], y[i + 1]], 'o-')
-    # Propojíme poslední a první město, abychom uzavřeli smyčku
-    plt.plot([x[-1], x[0]], [y[-1], y[0]], 'o-')
-    
+    plt.plot([x[-1], x[0]], [y[-1], y[0]], 'o-')  # Propojíme poslední a první město
+
     # Přidáme názvy měst ke každému bodu na grafu
     for i, city_index in enumerate(best_path):
-        plt.text(x[i], y[i], cities[city_index], fontsize=12, ha='right')
-    
+        city_name = cities[city_index]
+        plt.text(x[i], y[i], city_name, fontsize=12, ha='right')
+
     plt.title(f"Generace {generation + 1}, Nejlepší vzdálenost: {best_distance:.2f} km")
     plt.pause(0.01)
 
