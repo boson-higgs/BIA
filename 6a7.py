@@ -124,6 +124,71 @@ class ParticleSwarmOptimization:
             history.append(self.g_best.copy())
         return np.array(history)
 
+class SOMA_ALLToONE:
+    def __init__(self, func, dimension, lower_bound, upper_bound, pop_size=15, path_length=3.0, step=0.11, max_iter=50):
+        self.func = func
+        self.dimension = dimension
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.pop_size = pop_size
+        self.path_length = path_length  # Délka cesty (maximální krok částice směrem k leaderovi)
+        self.step = step  # Velikost kroku na cestě
+        self.max_iter = max_iter
+
+        # Inicializace populace (náhodné pozice)
+        self.population = [np.random.uniform(self.lower_bound, self.upper_bound, self.dimension) for _ in range(self.pop_size)]
+        self.scores = [self.func(individual) for individual in self.population]
+
+        # Najít leadera (nejlepší řešení v populaci)
+        self.leader_idx = np.argmin(self.scores)
+        self.leader = self.population[self.leader_idx]
+        self.leader_score = self.scores[self.leader_idx]
+
+    def optimize(self):
+        history = []  # Historie nejlepšího řešení
+
+        for _ in range(self.max_iter):
+            new_population = []
+
+            for i in range(self.pop_size):
+                if i == self.leader_idx:
+                    # Leader zůstává na svém místě
+                    new_population.append(self.population[i])
+                    continue
+
+                # Vektor směru k leaderovi
+                direction = self.leader - self.population[i]
+                temp_individual = self.population[i].copy()
+
+                # Procházení podél směru k leaderovi
+                for t in np.arange(0, self.path_length, self.step):
+                    candidate = temp_individual + t * direction
+
+                    # Ujistit se, že je řešení v povolených mezích
+                    candidate = np.clip(candidate, self.lower_bound, self.upper_bound)
+
+                    # Vyhodnocení objektivní funkce
+                    candidate_score = self.func(candidate)
+
+                    # Pokud je nové řešení lepší, aktualizuj
+                    if candidate_score < self.scores[i]:
+                        temp_individual = candidate
+                        self.scores[i] = candidate_score
+
+                new_population.append(temp_individual)
+
+            # Aktualizace populace
+            self.population = new_population
+
+            # Najít nového leadera
+            self.leader_idx = np.argmin(self.scores)
+            self.leader = self.population[self.leader_idx]
+            self.leader_score = self.scores[self.leader_idx]
+
+            # Uložit nejlepší řešení do historie
+            history.append(self.leader.copy())
+
+        return np.array(history)
 
 # Vizualizace
 def visualize(func, lower_bound, upper_bound, histories, labels, colors):
@@ -179,11 +244,15 @@ for label in labels:
     pso = ParticleSwarmOptimization(func, dimension=dimension, lower_bound=lower_bound, upper_bound=upper_bound, pop_size=20, max_iter=50)
     history_pso = pso.optimize()
 
+    soma = SOMA_ALLToONE(func, dimension=dimension, lower_bound=lower_bound, upper_bound=upper_bound, pop_size=20, max_iter=50)
+    history_soma = soma.optimize()
+
     visualize(
         func,
         lower_bound,
         upper_bound,
-        histories=[history_pso],
-        labels=["Particle Swarm Optimization"],
-        colors=['b']
+        histories=[history_pso, history_soma],
+        labels=["Particle Swarm Optimization", "SOMA"],
+        colors=['b', 'r']
     )
+
