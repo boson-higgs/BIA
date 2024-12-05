@@ -8,7 +8,7 @@ num_ants = 20
 num_iterations = 100
 alpha = 1.0  # vliv feromonů
 beta = 2.0   # vliv viditelnosti
-evaporation_rate = 0.5 #rychlost odpařování
+evaporation_rate = 0.5  # rychlost odpařování
 Q = 100  # konstantní přenos feromonů
 
 # Generování měst (náhodné souřadnice)
@@ -32,6 +32,9 @@ lines = []
 for _ in range(num_ants):
     line, = ax.plot([], [], 'b-', alpha=0.5)
     lines.append(line)
+
+# Linie pro nejlepší cestu
+best_line, = ax.plot([], [], 'g-', linewidth=2, label="Best Path")  # Zelená čára pro nejlepší trasu
 
 ax.legend()
 ax.set_xlim(0, 100)
@@ -81,8 +84,13 @@ def aco(iteration):
 
     paths.append((new_paths, new_distances))
 
+    # Aktualizace cest mravenců
     for ant, path in enumerate(new_paths):
         lines[ant].set_data(cities[path, 0], cities[path, 1])
+
+    # Aktualizace nejlepší cesty
+    if best_path is not None:
+        best_line.set_data(cities[best_path, 0], cities[best_path, 1])
 
     ax.set_title(f"Ant Colony Optimization - TSP\nBest Distance: {best_distance:.2f}")
     
@@ -90,6 +98,6 @@ def aco(iteration):
 
 ani = FuncAnimation(fig, aco, frames=num_iterations, interval=200, repeat=False)
 
-# ani.save("aco_tsp_animation.gif", writer="pillow")
+#ani.save("aco_tsp_animation.gif", writer="pillow")
 
 plt.show()
